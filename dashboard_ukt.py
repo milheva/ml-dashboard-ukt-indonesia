@@ -221,11 +221,18 @@ st.header("🤖 2. Prediksi UKT Maksimal (Machine Learning)")
 with st.container(border=True):
     # (Kode di bagian ini tidak berubah, tetap sama seperti sebelumnya)
     st.subheader("Melatih Model untuk Memprediksi Biaya")
-    with st.expander("Klik di sini untuk penjelasan cara kerja Algoritma"):
+with st.expander("Klik di sini untuk penjelasan cara kerja Algoritma"):
         st.markdown(
             """
-        #### Bagaimana Cara Kerja Algoritma Random Forest?
-        Untuk memprediksi UKT, kita menggunakan algoritma **Random Forest Regressor**. Bayangkan algoritma ini seperti sebuah **rapat dewan para ahli** untuk menebak harga... (dst)
+        #### Mengenal Cara Kerja Random Forest Regressor
+
+        Algoritma yang menjadi inti dari fitur prediksi ini adalah **Random Forest Regressor**. Prinsip kerjanya adalah "kekuatan dalam jumlah" atau yang dikenal sebagai *ensemble learning*.
+
+        Daripada membangun satu model tunggal yang kompleks, Random Forest membangun ratusan model yang lebih sederhana (*Decision Tree*) secara independen. Setiap model ini "belajar" dari porsi data yang dipilih secara acak. Selain itu, dalam setiap tahap pembelajarannya, setiap pohon hanya mempertimbangkan sebagian kecil dari total fitur yang ada (misalnya hanya `Pulau` dan `Daya Tampung`).
+
+        Proses pengacakan ganda ini—baik pada data maupun pada fitur—memastikan bahwa setiap pohon memiliki "spesialisasinya" sendiri dan tidak saling meniru kesalahan satu sama lain.
+
+        Saat prediksi dilakukan, setiap pohon akan memberikan prediksinya sendiri. Hasil akhir dari Random Forest bukanlah memilih prediksi dari pohon terbaik, melainkan **agregat (dalam kasus ini, rata-rata) dari semua prediksi pohon tersebut**. Metode ini terbukti sangat efektif untuk menghasilkan prediksi yang akurat dan tahan terhadap data yang tidak biasa (*outlier*).
         """
         )
     X_train, X_test, y_train, y_test = train_test_split(
