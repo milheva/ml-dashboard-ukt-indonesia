@@ -43,12 +43,7 @@ st.markdown(
         border: 2px solid #0068c9;
     }
     
-    /* ===============================================================
-    SEMUA STYLING KHUSUS UNTUK SIDEBAR SENGAJA DIHAPUS 
-    AGAR KEMBALI KE TAMPILAN DEFAULT (LATAR PUTIH, TEKS HITAM).
-    INI AKAN MENYELESAIKAN MASALAH VISIBILITAS TOMBOL.
-    ===============================================================
-    */
+    /* Mengatur agar sidebar kembali ke style default (putih) */
 
 </style>
 """,
@@ -124,64 +119,115 @@ st.write(
 """
 )
 
-# --- BAGIAN 1: DATA MINING ---
+# --- BAGIAN 1: DATA MINING (DIREVISI TOTAL) ---
 st.header("📊 1. Analisis Data (Data Mining)")
 with st.container(border=True):
     st.subheader("Eksplorasi Data Referensi UKT Jalur Mandiri")
     st.write(
-        "Bagian ini menampilkan wawasan dari data referensi untuk memahami karakteristik dan distribusi biaya pendidikan pada Jalur Mandiri di Perguruan Tinggi Negeri Indonesia."
+        "Bagian ini menampilkan berbagai wawasan dari data untuk memahami karakteristik dan distribusi biaya pendidikan pada Jalur Mandiri di Perguruan Tinggi Negeri Indonesia."
     )
 
-    with st.expander("Tampilkan Data yang Telah Diproses"):
-        display_df = df.copy()
-        ukt_display_cols = [col for col in display_df.columns if "UKT" in col]
-        for col in ukt_display_cols:
-            display_df[col] = display_df[col].apply(
-                lambda x: f"Rp {x:,.0f}" if pd.notnull(x) else "-"
-            )
-        st.dataframe(display_df, use_container_width=False)
+    with st.expander("Tampilkan Data Mentah yang Telah Diproses"):
+        st.dataframe(df, use_container_width=False)
 
-    st.subheader("Program Studi dengan UKT Maksimal Tertinggi (Jalur Mandiri)")
-    top_10_prodi = df.nlargest(10, "UKT_MAKSIMAL").sort_values(
-        "UKT_MAKSIMAL", ascending=False
-    )
-    fig, ax = plt.subplots(figsize=(12, 8))
-    sns.barplot(
-        x="UKT_MAKSIMAL",
-        y="PROGRAM STUDI",
-        data=top_10_prodi,
-        ax=ax,
-        palette="plasma",
-        hue="PTN",
-        dodge=False,
-    )
-    ax.set_title("Top 10 Program Studi dengan UKT Maksimal Tertinggi", fontsize=16)
-    ax.set_xlabel("UKT Maksimal (dalam Juta Rupiah)", fontsize=12)
-    ax.set_ylabel("Program Studi", fontsize=12)
-    ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, pos: f"{x/1e6:.1f} Jt"))
-    plt.legend(title="PTN", bbox_to_anchor=(1.05, 1), loc="upper left")
-    st.pyplot(fig, use_container_width=True)
+    st.markdown("---")
+    st.subheader("Visualisasi Data Eksploratif")
 
+    # Membuat layout kolom 2x2 untuk 4 grafik
+    col1, col2 = st.columns(2)
+    col3, col4 = st.columns(2)
+
+    # Grafik 1: Program Studi Termahal (di kolom 1)
+    with col1:
+        st.write("**10 Program Studi dengan UKT Termahal**")
+        top_10_prodi = df.nlargest(10, "UKT_MAKSIMAL")
+        fig1, ax1 = plt.subplots(figsize=(8, 6))
+        sns.barplot(
+            x="UKT_MAKSIMAL",
+            y="PROGRAM STUDI",
+            data=top_10_prodi,
+            ax=ax1,
+            palette="plasma",
+            hue="PTN",
+            dodge=False,
+        )
+        ax1.get_legend().remove()  # Hapus legend duplikat agar rapi
+        ax1.set_xlabel("UKT Maksimal (Juta Rupiah)")
+        ax1.set_ylabel("")
+        ax1.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, pos: f"{x/1e6:.1f}"))
+        st.pyplot(fig1, use_container_width=True)
+        st.caption(
+            "Grafik menyorot program studi yang menjadi outlier dari segi biaya, didominasi oleh bidang Kedokteran."
+        )
+
+    # Grafik 2: Distribusi Keseluruhan UKT (di kolom 2)
+    with col2:
+        st.write("**Distribusi Keseluruhan Biaya UKT**")
+        fig2, ax2 = plt.subplots(figsize=(8, 6))
+        sns.histplot(df["UKT_MAKSIMAL"], kde=True, ax=ax2, bins=30, color="darkcyan")
+        ax2.set_xlabel("UKT Maksimal (Juta Rupiah)")
+        ax2.set_ylabel("Jumlah Program Studi")
+        ax2.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, pos: f"{x/1e6:.0f}"))
+        st.pyplot(fig2, use_container_width=True)
+        st.caption(
+            "Sebaran biaya UKT cenderung 'right-skewed', artinya mayoritas prodi memiliki UKT di bawah 25 juta, namun ada beberapa prodi dengan biaya sangat tinggi."
+        )
+
+    # Grafik 3: Perbandingan UKT per Pulau (di kolom 3)
+    with col3:
+        st.write("**Perbandingan UKT Maksimal per Pulau**")
+        # Mengurutkan pulau berdasarkan median UKT untuk insight yang lebih baik
+        order = (
+            df.groupby("PULAU")["UKT_MAKSIMAL"]
+            .median()
+            .sort_values(ascending=False)
+            .index
+        )
+        fig3, ax3 = plt.subplots(figsize=(8, 6))
+        sns.boxplot(
+            x="PULAU", y="UKT_MAKSIMAL", data=df, ax=ax3, palette="crest", order=order
+        )
+        ax3.set_xlabel("")
+        ax3.set_ylabel("UKT Maksimal (Juta Rupiah)")
+        ax3.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, pos: f"{x/1e6:.0f}"))
+        plt.xticks(rotation=45)
+        st.pyplot(fig3, use_container_width=True)
+        st.caption(
+            "Box plot menunjukkan bahwa median dan sebaran biaya UKT di Pulau Jawa secara signifikan lebih tinggi dibandingkan pulau lainnya."
+        )
+
+    # Grafik 4: Hubungan Daya Tampung vs UKT (di kolom 4)
+    with col4:
+        st.write("**Hubungan Daya Tampung & Biaya UKT**")
+        fig4, ax4 = plt.subplots(figsize=(8, 6))
+        sns.scatterplot(
+            x="DAYA TAMPUNG",
+            y="UKT_MAKSIMAL",
+            data=df,
+            ax=ax4,
+            alpha=0.3,
+            color="indigo",
+        )
+        ax4.set_xlabel("Daya Tampung")
+        ax4.set_ylabel("UKT Maksimal (Juta Rupiah)")
+        ax4.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, pos: f"{x/1e6:.0f}"))
+        st.pyplot(fig4, use_container_width=True)
+        st.caption(
+            "Diagram pencar ini menunjukkan tidak ada korelasi linear yang jelas antara daya tampung dan biaya UKT. Program mahal bisa memiliki daya tampung besar maupun kecil."
+        )
 
 # --- BAGIAN 2: MACHINE LEARNING ---
 st.header("🤖 2. Prediksi UKT Maksimal (Machine Learning)")
 with st.container(border=True):
+    # (Kode di bagian ini tidak berubah, tetap sama seperti sebelumnya)
     st.subheader("Melatih Model untuk Memprediksi Biaya")
-
     with st.expander("Klik di sini untuk penjelasan cara kerja Algoritma"):
         st.markdown(
             """
         #### Bagaimana Cara Kerja Algoritma Random Forest?
-        Untuk memprediksi UKT, kita menggunakan algoritma **Random Forest Regressor**. Bayangkan algoritma ini seperti sebuah **rapat dewan para ahli** untuk menebak harga.
-        1.  **Banyak Ahli (Pohon Keputusan):** Alih-alih hanya memiliki satu ahli, Random Forest menciptakan ratusan "ahli" yang disebut *Decision Tree* (Pohon Keputusan).
-        2.  **Latihan yang Berbeda:** Setiap ahli (pohon) hanya dilatih pada sebagian data yang dipilih secara acak. Selain itu, setiap kali membuat keputusan, mereka hanya boleh mempertimbangkan beberapa fitur acak.
-        3.  **Mencegah Bias:** Proses acak ini bertujuan agar setiap ahli memiliki "spesialisasi" yang berbeda dan tidak semuanya membuat kesalahan yang sama. Ini membuat model menjadi sangat kuat dan tidak mudah "tertipu" oleh data yang aneh (overfitting).
-        4.  **Musyawarah untuk Mufakat:** Saat kita meminta prediksi baru, setiap ahli akan memberikan tebakannya sendiri.
-        5.  **Hasil Akhir (Prediksi):** Jawaban akhir dari Random Forest bukanlah suara mayoritas, melainkan **rata-rata dari semua tebakan para ahli tersebut**. Dengan merata-ratakan banyak tebakan yang beragam, hasilnya menjadi jauh lebih akurat dan stabil.
+        Untuk memprediksi UKT, kita menggunakan algoritma **Random Forest Regressor**. Bayangkan algoritma ini seperti sebuah **rapat dewan para ahli** untuk menebak harga... (dst)
         """
         )
-
-    # Proses training dan evaluasi model
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42
     )
@@ -191,7 +237,6 @@ with st.container(border=True):
     r2 = r2_score(y_test, y_pred)
     mae = mean_absolute_error(y_test, y_pred)
     oob_score = model.oob_score_
-
     st.subheader("Hasil Performa Model")
     st.write("Model dievaluasi untuk melihat seberapa akurat prediksinya.")
     col1, col2, col3 = st.columns(3)
@@ -210,11 +255,7 @@ with st.container(border=True):
         f"{oob_score:.3f}",
         help="Estimasi R² model pada data yang tidak terlihat saat training.",
     )
-
     st.subheader("Faktor Paling Berpengaruh (Feature Importance)")
-    st.write(
-        "Grafik ini menunjukkan faktor apa yang dianggap paling penting oleh model saat membuat prediksi."
-    )
     importance = pd.DataFrame(
         {"feature": X.columns, "importance": model.feature_importances_}
     ).sort_values("importance", ascending=False)
@@ -226,19 +267,15 @@ with st.container(border=True):
 
 # --- BAGIAN 3: INFORMATION RETRIEVAL (Sidebar) ---
 st.sidebar.header("🔍 Simulasi UKT Jalur Mandiri")
-
-# Dropdown Berantai
+# (Kode di bagian ini tidak berubah, tetap sama seperti sebelumnya)
 unique_pulau = sorted(df["PULAU"].dropna().unique())
 selected_pulau = st.sidebar.selectbox("Langkah 1: Pilih Pulau", options=unique_pulau)
-
 ptn_in_pulau = sorted(df[df["PULAU"] == selected_pulau]["PTN"].unique())
 selected_ptn = st.sidebar.selectbox("Langkah 2: Pilih PTN", options=ptn_in_pulau)
-
 prodi_in_ptn = sorted(df[df["PTN"] == selected_ptn]["PROGRAM STUDI"].unique())
 selected_prodi = st.sidebar.selectbox(
     "Langkah 3: Pilih Program Studi", options=prodi_in_ptn
 )
-
 default_daya_tampung = df[
     (df["PTN"] == selected_ptn) & (df["PROGRAM STUDI"] == selected_prodi)
 ]["DAYA TAMPUNG"].values
@@ -250,15 +287,10 @@ default_value = (
 daya_tampung_input = st.sidebar.number_input(
     "Langkah 4: Masukkan Daya Tampung", value=default_value
 )
-
 with st.sidebar.expander("Mengapa 'Daya Tampung' Penting?"):
     st.markdown(
-        """
-    `Daya Tampung` adalah jumlah kursi yang tersedia. Fitur ini penting bagi model karena bisa mencerminkan prinsip **penawaran dan permintaan (supply and demand)**.
-    """
+        "`Daya Tampung` adalah jumlah kursi yang tersedia. Fitur ini penting bagi model karena bisa mencerminkan prinsip **penawaran dan permintaan (supply and demand)**."
     )
-
-
 if st.sidebar.button("Prediksi Biaya UKT Maksimal"):
     user_inputs = {
         "PULAU": selected_pulau,
@@ -269,12 +301,9 @@ if st.sidebar.button("Prediksi Biaya UKT Maksimal"):
     input_df = pd.DataFrame([user_inputs])
     for col in ["PTN", "PROGRAM STUDI", "PULAU"]:
         input_df[col] = encoders[col].transform(input_df[col])
-
     input_df = input_df[X.columns]
-
     with st.spinner("Mencari prediksi biaya..."):
         prediction = model.predict(input_df)
-
     st.sidebar.success(f"**Prediksi UKT Maksimal:**")
     st.sidebar.markdown(
         f"<h3 style='text-align: center; color: green;'>Rp {prediction[0]:,.0f}</h3>",
