@@ -221,7 +221,7 @@ st.header("🤖 2. Prediksi UKT Maksimal (Machine Learning)")
 with st.container(border=True):
     # (Kode di bagian ini tidak berubah, tetap sama seperti sebelumnya)
     st.subheader("Melatih Model untuk Memprediksi Biaya")
-with st.expander("Klik di sini untuk penjelasan cara kerja Algoritma"):
+    with st.expander("Klik di sini untuk penjelasan cara kerja Algoritma"):
         st.markdown(
             """
         #### Mengenal Cara Kerja Random Forest Regressor
